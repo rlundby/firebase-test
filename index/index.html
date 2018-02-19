@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Firebase app</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+
+<div id="app" style="display:none;">
+    <h2>Vote for your favorite team!</h2>
+    <ul>
+        <li>
+            <img src="../images/valor-instinct-mystic-new2.png" alt="">
+            <strong>Instinct: </strong> <span id="instinct">...loading...</span>
+            <button id="voteForInstinct">Vote for Instinct</button>
+        </li>
+        <li>
+            <img src="../images/SmKtvFa.png" alt="">
+            <strong>Mystic: </strong> <span id="mystic">...loading...</span>
+            <button id="voteForMystic">Vote for Mystic</button>
+        </li>
+        <li>
+            <img src="../images/valor-instinct-mystic-new.png" alt="">
+            <strong>Valor: </strong> <span id="valor">...loading...</i></span>
+            <button id="voteForValor">Vote for Valor</button>
+        </li>
+    </ul>
+    <button id="logout">Log Out</button>
+</div>
+
+<div id="outside">
+    <h3>Hi anon - please log in!</h3>
+    <button id="loginbtn">Log in</button>
+</div>
+
+
+
+
+
+
+  <script src="https://use.fontawesome.com/c081293f9c.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-database.js"></script>
+  
+  <script>
+      // Our Firebase Config
+    var config = {
+      apiKey: "AIzaSyAUVIkCK76c3FPIQvJoMLWA5De4nyOv5So ",
+      authDomain: "i-will-pikachu-in-the-shower.firebaseapp.com",
+      databaseURL: "https://i-will-pikachu-in-the-shower.firebaseio.com",
+    };
+    firebase.initializeApp(config);
+
+    // Vars for Firebase
+    var db = firebase.database();
+
+    var auth = firebase.auth();
+
+    var provider = new firebase.auth.GithubAuthProvider();
+
+    var userId;
+
+
+    // Log in buttons
+    document.getElementById("loginbtn").addEventListener("click",function () {
+        auth.signInWithPopup(provider);
+    });
+      document.getElementById("logout").addEventListener("click",function () {
+          auth.signOut();
+      });
+
+    // Hide and show voting
+    auth.onAuthStateChanged(function(authData){
+        if (authData){
+            document.getElementById("app").style.display = 'block';
+            document.getElementById("outside").style.display = 'none';
+
+            userId = authData.uid;
+
+            db.ref('/votes').on('value', function(snapshot){
+                var votes = snapshot.val();
+
+                var scores =  {
+                    instinct: 0,
+                    mystic: 0,
+                    valor: 0
+                };
+
+                for(var uid in votes) {
+                    scores[ votes[uid] ] += 1;
+                };
+
+                ui.instinct.innerText = scores.instinct;
+                ui.mystic.innerText = scores.mystic;
+                ui.valor.innerText = scores.valor;
+            });
+        } else {
+            document.getElementById("app").style.display = 'none';
+            document.getElementById("outside").style.display = 'block';
+        }
+        console.log("AUTHDATA", authData);
+    })
+
+      // Get Data
+    db.ref('/').on('value', function (snapshot) {
+        var data = snapshot.val();
+        console.log("DATA", data);
+    });
+
+    // Create ui variables
+    var ui = {
+        instinct: document.getElementById("instinct"),
+        mystic: document.getElementById("mystic"),
+        valor: document.getElementById("valor"),
+    };
+
+    // Create vote buttons
+    document.getElementById("voteForInstinct").addEventListener("click", function(){
+        db.ref('/votes/' + userId).set("instinct");
+    });
+    document.getElementById("voteForMystic").addEventListener("click", function(){
+        db.ref('/votes/' + userId).set("mystic");
+    });
+    document.getElementById("voteForValor").addEventListener("click", function(){
+        db.ref('/votes/' + userId).set("valor");
+    });
+
+  </script>
+
+</body>
+</html>
